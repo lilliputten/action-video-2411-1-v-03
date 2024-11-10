@@ -18,5 +18,8 @@
 /types
 /utils
 
-package-lock.*
-**/*_
+/package-lock.*
+/pnpm-lock.*
+/**/*_
+
+/src/libs

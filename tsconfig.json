@@ -23,7 +23,7 @@
     }
   },
   "typeRoots": ["src/", "node_modules/@types"],
-  "types": [ "youtube" ],
+  "types": ["youtube"],
   "include": ["src/**/*.ts", "src/**/*.js"],
-  "exclude": ["node_modules", ".git", ".vscode", "docs", "tests", "**/*_"]
+  "exclude": ["node_modules", ".git", ".vscode", "docs", "tests", "**/*_", "/src/libs"]
 }

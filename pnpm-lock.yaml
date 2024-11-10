@@ -17,12 +17,6 @@ importers:
       '@babel/preset-env':
         specifier: ^7.22.9
         version: 7.26.0(@babel/core@7.26.0)
-      '@types/google-one-tap':
-        specifier: ^1.2.6
-        version: 1.2.6
-      '@types/google.accounts':
-        specifier: ^0.0.14
-        version: 0.0.14
       '@types/youtube':
         specifier: ^0.1.0
         version: 0.1.0
@@ -697,12 +691,6 @@ packages:
 
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
-
-  '@types/google-one-tap@1.2.6':
-    resolution: {integrity: sha512-REmJsXVHvKb/sgI8DF+7IesMbDbcsEokHBqxU01ENZ8d98UPWdRLhUCtxEm9bhNFFg6PJGy7PNFdvovp0hK3jA==}
-
-  '@types/google.accounts@0.0.14':
-    resolution: {integrity: sha512-HqIVkVzpiLWhlajhQQd4rIV7czanFvXblJI2J1fSrL+VKQuQwwZ63m35D/mI0flsqKE6p/hNrAG0Yn4FD6JvNA==}
 
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
@@ -3246,10 +3234,6 @@ snapshots:
   '@pkgr/core@0.1.1': {}
 
   '@rtsao/scc@1.1.0': {}
-
-  '@types/google-one-tap@1.2.6': {}
-
-  '@types/google.accounts@0.0.14': {}
 
   '@types/json5@0.0.29': {}
 

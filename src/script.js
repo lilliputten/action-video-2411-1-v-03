@@ -1,219 +1,288 @@
-const buttons = document.querySelectorAll('.btn');
-const white = document.querySelector('.white');
-const none = document.querySelector('.none');
-const question = document.querySelector('.que');
-const comm = document.querySelector('.comm');
-const start = document.querySelector('.start');
-const end = document.querySelector('.end');
+// @ts-check
+/* eslint-disable no-console */
+/* globals useLocalVideo, questions, comms, answers */
+/* exported onYouTubePlayerAPIReady */
 
-let started = 0;
+const buttons = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.btn'));
+const white = /** @type {HTMLElement} */ (document.querySelector('.white'));
+const none = /** @type {HTMLElement} */ (document.querySelector('.none'));
+const question = /** @type {HTMLElement} */ (document.querySelector('.que'));
+const comm = /** @type {HTMLElement} */ (document.querySelector('.comm'));
+const start = /** @type {HTMLElement} */ (document.querySelector('.start'));
+const startButton = /** @type {HTMLElement} */ (document.querySelector('.start-button'));
+const end = /** @type {HTMLElement} */ (document.querySelector('.end'));
+const error = /** @type {HTMLElement} */ (document.querySelector('.error'));
+
+const videoNode = /** @type {HTMLVideoElement} */ (document.querySelector('video.video'));
+const videoSource = document.createElement('source');
+
 let changed = 0;
-let states = [];
-let timeout;
 
-const videos = [
-    '3ZyiYJ1Ashc',
-    'DtrK8e03Ri0',
-    '6twkdANujAo',
-    'JI1t4ocnceM'
+/** Youtube video ids */
+const ytVideos = [
+  // prettier-ignore
+  '3ZyiYJ1Ashc',
+  'DtrK8e03Ri0',
+  '6twkdANujAo',
+  'JI1t4ocnceM',
 ];
 
-const questions = [
-    'Корректно ли ответила медсестра?',
-    'Всё ли правильно делает медсестра?',
-    'Корректно ли ответила медсестра?'
-];
-
-const comms = [
-    '',
-    'Внимание! Сейчас нужно оценить только одно: корректно ли медсестра взаимодействует с пациентом. Порядок действий при таких симптомах, разберём на уроке "Инфаркт миокадра".',
-    'Оцените только с этической точки зрения. Ставить диагнозы, конечно, не следует.'
-];
-
-const answers = [
-    [
-        'Да, всё правильно',
-        'Нет, так нельзя'
-    ],
-
-    [
-        'Да, всё правильно',
-        'Нет, так нельзя'
-    ],
-
-    [
-        'Да, корректно',
-        'Нет, не корректно'
-    ]
+/** Local video files */
+const localVideos = [
+  // Local videos,,,
+  'videos/1.mp4',
+  'videos/2.mp4',
+  'videos/3.mp4',
+  'videos/4.mp4',
 ];
 
 let level = 0;
-let target = null;
-let counter = null;
-var tag = document.createElement('script');
-var firstScriptTag = document.getElementsByTagName('script')[0];
-let player;
 
+/** @type {InstanceType<typeof window.YT.Player>} */
+let ytPlayer;
 
-
-function onload() {
-    changeVideo();
-    player.pauseVideo();
-    document.addEventListener('transitionstart', (e) => {
-        if (e.propertyName == 'opacity') {
-            if (e.target == white) {
-                player.playVideo();
-            }
-        }
-    });
-    document.addEventListener('transitionend', (e) => {
-        if (e.propertyName == 'opacity') {
-            hide(e.target);
-            e.target.classList.remove('no-op');
-            if (e.target == white) {
-
-                changeQuestion();
-                changeAnswers();
-                changeComm();
-            }
-        }
-    });
-
+function pauseVideo() {
+  console.log('[pauseVideo]');
+  if (useLocalVideo) {
+    videoNode.pause();
+  } else {
+    ytPlayer.pauseVideo();
+  }
 }
 
-document.addEventListener('click', (e) => main(e));
+function playVideo() {
+  console.log('[playVideo]');
+  if (useLocalVideo) {
+    videoNode.play();
+  } else {
+    ytPlayer.playVideo();
+  }
+}
 
-function main(e) {
-    if (started == 1 && e.target.classList.contains('start-button')) {
-        player.playVideo();
-        noOp(start);
-        // return false;
-    } else if (e.target.classList.contains('end-button')) {
-        location.reload();
-    } else if (findTarget(e)) {
-        if (changed == 0) {
-            clearTimeout(timeout);
-            changed = 1;
-            changeLevel();
-            changeVideo();
-            player.playVideo();
-            // setTimeout(() => {
-            // player.pauseVideo();
-            // }, 100);
-        }
-        player.seekTo(0);
-        player.playVideo();
-        noOp(white);
-        // player.playVideo();
-    } else {
-        return false;
+function replayVideo() {
+  console.log('[replayVideo]');
+  if (useLocalVideo) {
+    videoNode.pause();
+    videoNode.currentTime = 0;
+    videoNode.play();
+  } else {
+    ytPlayer.seekTo(0, true);
+    ytPlayer.playVideo();
+  }
+}
+
+function initPlayer() {
+  console.log('[initPlayer]');
+  changeVideo();
+  pauseVideo();
+  document.addEventListener('transitionstart', (ev) => {
+    const { target, propertyName } = ev;
+    if (propertyName == 'opacity') {
+      if (target == white) {
+        playVideo();
+      }
     }
+  });
+  document.addEventListener('transitionend', (ev) => {
+    const { propertyName } = ev;
+    const eventTarget = /** @type {HTMLElement} */ (ev.target);
+    if (propertyName == 'opacity') {
+      hide(eventTarget);
+      eventTarget.classList.remove('no-op');
+      if (eventTarget == white) {
+        changeTexts();
+      }
+    }
+  });
 }
 
+/** @param {MouseEvent} ev */
+function main(ev) {
+  const eventTarget = /** @type {HTMLElement} */ (ev.target);
+  console.log('[main]', {
+    eventTarget,
+  });
+  if (eventTarget.classList.contains('start-button')) {
+    console.log('[main] start-button');
+    playVideo();
+    noOp(start);
+  } else if (eventTarget.classList.contains('end-button')) {
+    console.log('[main] end (reload)');
+    location.reload();
+  } else if (findTarget(ev)) {
+    console.log('[main] other');
+    if (changed == 0) {
+      changed = 1;
+      changeLevel();
+      changeVideo();
+      playVideo();
+    }
+    replayVideo();
+    noOp(white);
+  } else {
+    console.log('[main] else (???)');
+    return false;
+  }
+}
+
+/** @param {HTMLElement} tar */
 function hide(tar) {
-    tar.classList.add('hide');
+  tar.classList.add('hide');
 }
 
+/** @param {HTMLElement} tar */
 function noOp(tar) {
-    tar.classList.add('no-op');
+  tar.classList.add('no-op');
 }
 
+/** @param {HTMLElement} tar */
 function show(tar) {
-    tar.classList.remove('hide');
+  tar.classList.remove('hide');
 }
 
 function playerChange() {
-    states.push(player.getPlayerState());
-    if (states.length == 3) {
-        started = 1;
-    }
-    if (player.getPlayerState() == 0) {
-        changed = 0;
-        checkComm();
-        checkFinish();
-        show(white);
-        timeout = setTimeout(() => {
-            changed = 1;
-            changeLevel();
-            changeVideo();
-            player.playVideo();
-            setTimeout(() => {
-                player.pauseVideo();
-            }, 100);
-        }, 400);
-
-    } else if (player.getPlayerState() == 1) {
-        show(none);
-        // player.playVideo();
-    }
+  const state = ytPlayer.getPlayerState();
+  if (state === 0) {
+    handleVideoEnd();
+  } else if (state === 1) {
+    show(none);
+    // playVideo();
+  }
 }
 
-
-
-function findTarget(e) {
-    target = null;
-    if (e.target.classList.contains('btn')) {
-        target = e.target;
-        return true;
-    } else {
-        return false;
-    }
+/** @param {MouseEvent} ev */
+function findTarget(ev) {
+  const eventTarget = /** @type {HTMLElement} */ (ev.target);
+  if (eventTarget.classList.contains('btn')) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 function changeVideo() {
-    player.loadVideoById(videos[level]);
-    return true;
+  console.log('[changeVideo]', {
+    useLocalVideo,
+    level,
+  });
+  if (useLocalVideo) {
+    const videoUrl = localVideos[level];
+    console.log('[changeVideo] local', {
+      videoUrl,
+    });
+    videoSource.setAttribute('src', videoUrl);
+    videoNode.load();
+  } else {
+    const videoId = ytVideos[level];
+    console.log('[changeVideo] youtube', {
+      videoId,
+    });
+    ytPlayer.loadVideoById(videoId);
+  }
+  return true;
 }
 
 function changeLevel() {
-    level++;
-    return true;
+  level++;
+  return true;
 }
 
 function changeQuestion() {
-    question.innerText = questions[level];
-    return true;
+  question.innerText = questions[level];
+  return true;
 }
 
 function changeAnswers() {
-    for (let i = 0; i < buttons.length; i++) {
-        buttons[i].innerText = answers[level][i];
-    }
+  for (let i = 0; i < buttons.length; i++) {
+    buttons[i].innerText = answers[level][i];
+    buttons[i].classList.toggle('selected', false);
+  }
 }
 
 function changeComm() {
-    comm.innerText = comms[level];
+  comm.innerText = comms[level];
+}
+
+function changeTexts() {
+  changeQuestion();
+  changeAnswers();
+  changeComm();
 }
 
 function checkComm() {
-    if (level < comms.length) {
-        if (comms[level].length == 0) {
-            hide(comm);
-        } else {
-            show(comm);
-        }
+  if (level < comms.length) {
+    if (comms[level].length == 0) {
+      hide(comm);
+    } else {
+      show(comm);
     }
+  }
 }
 
 function checkFinish() {
-    if (level == answers.length) {
-        show(end);
-    }
+  if (level == answers.length) {
+    show(end);
+  }
 }
 
-tag.src = "https://www.youtube.com/player_api";
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+function handleVideoEnd() {
+  console.log('[handleVideoEnd]');
+  changed = 0;
+  checkComm();
+  checkFinish();
+  show(white);
+}
 
+/** @param {ErrorEvent} ev */
+function handleVideoError(ev) {
+  const { src } = videoSource;
+  // eslint-disable-next-line no-console
+  console.log('[handleVideoError]', {
+    src,
+    ev,
+    videoSource,
+  });
+  debugger; // eslint-disable-line no-debugger
+  error.innerText = 'Ошибка загрузки видео "' + src + '"';
+  show(error);
+}
+
+// eslint-disable-next-line no-unused-vars
 function onYouTubePlayerAPIReady() {
-    player = new YT.Player('ytplayer', {
-        videoId: '3ZyiYJ1Ashc',
-        playerVars: { 'controls': 0, 'showinfo': 0 },
-        events: {
-            'onStateChange': playerChange,
-            'onReady': onload
-        }
-    });
-    player.getIframe().classList.add('player');
-    // hide(player.getIframe());
+  ytPlayer = new window.YT.Player('ytplayer', {
+    videoId: ytVideos[0],
+    playerVars: { controls: 0, showinfo: 0 },
+    events: {
+      onStateChange: playerChange,
+      onReady: initPlayer,
+    },
+  });
+  ytPlayer.getIframe().classList.add('player');
+  show(document.getElementById('ytplayer'));
+  show(startButton);
+  document.addEventListener('click', main);
+}
 
+function onYoutubePlayerReady() {
+  const tag = document.createElement('script');
+  tag.src = 'https://youtube.com/player_api';
+  const firstScriptTag = document.getElementsByTagName('script')[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+}
+
+function onLocalPlayerReady() {
+  videoSource.setAttribute('type', 'video/mp4');
+  videoNode.appendChild(videoSource);
+  videoNode.addEventListener('ended', handleVideoEnd);
+  videoSource.addEventListener('error', handleVideoError);
+  show(videoNode);
+  initPlayer();
+  show(startButton);
+  document.addEventListener('click', main);
+}
+
+if (useLocalVideo) {
+  window.addEventListener('load', onLocalPlayerReady);
+} else {
+  window.addEventListener('load', onYoutubePlayerReady);
 }
